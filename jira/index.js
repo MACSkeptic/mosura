@@ -29,4 +29,10 @@ function get(url) {
   return deferred.promise;
 }
 
+function toQueryString(params) {
+  return '?' + _.map(params, function (key, value) {
+    return key + '=' + encodeURIComponent(value);
+  }).join('&');
+}
+
 exports.issue = _.compose(get, issueUrl);
