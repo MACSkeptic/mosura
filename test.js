@@ -1,0 +1,1 @@
+require('./jira').issue('AUC-1000').then(function (result) { console.log(result.body); });
