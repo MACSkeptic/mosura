@@ -13,6 +13,8 @@ function issueUrl(issueId) {
 function get(url) {
   var deferred = q.defer();
 
+  console.log(url);
+
   request.get(url, function (error, response, body) {
     if (error) {
       deferred.reject(error);
@@ -30,9 +32,27 @@ function get(url) {
 }
 
 function toQueryString(params) {
-  return '?' + _.map(params, function (key, value) {
+  return '?' + _.map(params, function (value, key) {
     return key + '=' + encodeURIComponent(value);
   }).join('&');
 }
 
-exports.issue = _.compose(get, issueUrl);
+function addComponentStatusQueryString(url, component, status) {
+  return url + toQueryString({
+    jql: 'component="'+ component +'" and status="'+ status +'" and IssueType in (Story, Bug)'
+  });
+}
+
+function addExpandRenderedFieldsQueryString(url) {
+  return url + toQueryString({
+    expand: 'renderedFields'
+  });
+}
+
+function searchUrl() {
+  return baseUrl + '/search';
+}
+
+exports.issues = _.compose(get, _.curry(addComponentStatusQueryString)(searchUrl()));
+
+exports.issue = _.compose(get, addExpandRenderedFieldsQueryString, issueUrl);
