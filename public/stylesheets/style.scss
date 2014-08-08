@@ -12,6 +12,7 @@ $sticky-background-bug: #ffaaaa;
 body, html {
   padding: 0;
   margin: 0;
+  overflow-y: auto;
   @include calc(height, 100%);
 
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
@@ -26,74 +27,101 @@ a {
 }
 
 .column {
-  overflow-y: auto;
-  overflow-x: hidden;
   float: left;
-  width: 25%;
+  width: 20%;
   padding: 0;
   margin: 0;
   @include calc(height, 100%);
+  @include calc(max-height, 100%);
 
   & + .column {
-    border-left: solid 1em #ff00ff;
+    border-left: dotted 0.2em #e15119;
   }
 }
 
 .column-header {
   font-weight: bolder;
-  font-size: 2em;
+  font-size: 1em;
   text-align: center;
-  padding: 0.3em 0 1em;
+  padding: 0.3em 0 0.3em;
+  background: #e15119;
+  color: #ffffff;
 }
 
 .sticky-list {
   padding: 0 0 0 0;
   display: block;
   margin: 0;
+  margin-top: 1em;
 }
 
 .sticky-id {
   font-weight: bolder;
-  font-size: 2em;
+  font-size: 1.2em;
   display: block;
   margin: 0;
-  padding: 0.5em 0;
+  padding: 0.2em 0.2em;
+
+  display: inline-block;
+  background: rgba(0,0,0,0.05);
+  z-index: 1;
+  float: right;
 }
 
 .sticky-summary {
   font-family: 'Indie Flower', cursive;
   font-weight: bolder;
+  position: relative;
   margin: 0;
-  padding: 0;
+  padding: 0.3em 0.5em;
   font-size: 1.5em;
+  z-index: 1;
 }
 
 .sticky {
   &:nth-child(2n) {
-    transform: rotate(3deg) translate3d(0, 0, 0);
+    transform: rotate(-1deg) translate3d(0, 0, 0);
   }
   &:nth-child(2n + 1) {
-    transform: rotate(5deg) translate3d(0, 0, 0);
+    transform: rotate(2deg) translate3d(0, 0, 0);
   }
   &:nth-child(2n + 2) {
     transform: rotate(-2deg) translate3d(0, 0, 0);
   }
-  box-shadow: #000 1px 6px 12px -3px;
+  &:nth-child(2n + 3) {
+    transform: rotate(1deg) translate3d(0, 0, 0);
+  }
+  position: relative;
+  box-shadow: rgba(0, 0, 0, 0.2) 1.5em 1.5em 2px -1.5em;
   display: block;
-  height: 13em;
-  @include calc(width, 80%);
+  min-height: 6em;
+  @include calc(width, 90%);
   margin: 0 auto;
-  padding: 0.5em;
+  padding: 0;
   background: $sticky-background;
+  border-bottom-right-radius: 60px 5px;
+  z-index: 1;
+
   & + .sticky {
-    margin-top: 2em;
+    margin-top: 1em;
   }
 }
 
 .sticky .Story, .Story {
   background: $sticky-background-story;
+  border: solid 1px $sticky-background-story;
+  @include background-image(linear-gradient(-45deg, rgba(255,255,136,1) 77%,rgba(255,255,214,1) 100%)); /* W3C */
 }
 
 .sticky .Bug, .Bug {
   background: $sticky-background-bug;
+  border: solid 1px $sticky-background-bug;
+  @include background-image(linear-gradient(-45deg, #ffaaaa 77%, #ffcccc 100%)); /* W3C */
+}
+
+.loading {
+  font-size: 5em;
+  padding: 3em 0;
+  text-align: center;
+  display: block;
 }
