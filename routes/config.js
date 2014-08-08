@@ -4,7 +4,7 @@ var router = express.Router();
 router.get('/columns', function(req, res) {
   var columns = [];
   try {
-    columns = require('../columns.json');
+    columns = (process.env.COLUMNS && JSON.parse(process.env.COLUMNS)) || require('../columns.json');
   } catch (e) {
     console.error(e);
 
