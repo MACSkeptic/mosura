@@ -20,9 +20,20 @@
       </ul>
     </div>
 
+    <form class="setup-information" ng-hide="allGood" ng-submit="updateCookie()">
+      <fieldset>
+        <label for="username">JIRA username</label><input id="username" ng-model="jira.username"/>
+        <label for="password">JIRA password</label><input type="password" id="password" ng-model="jira.password"/>
+        <label for="baseurl">JIRA API</label><input placeholder="e.g.: http://<yourcompany>.atlassian.net/rest/api/2" id="baseurl" ng-model="jira.baseUrl"/>
+        <label for="component">JIRA component</label><input id="component" ng-model="jira.component"/>
+      </fieldset>
+      <input type="submit" value="go!"/>
+    </form>
+
     <script src="/javascripts/external/angular.js"></script>
     <script src="/javascripts/external/angular-route.js"></script>
     <script src="/javascripts/external/angular-resource.js"></script>
+    <script src="/javascripts/external/angular-cookies.js"></script>
 
     <script src="/javascripts/mosura/app.js"></script>
   </body>
