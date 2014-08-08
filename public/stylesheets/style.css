@@ -1,24 +1,12 @@
-@import "compass/css3";
-
-$sticky-background: #ffffcc;
-$sticky-background-story: #ffffbb;
-$sticky-background-bug: #ffaaaa;
-
-@mixin calc($property, $expression) {
-  #{$property}: -webkit-calc(#{$expression});
-  #{$property}: calc(#{$expression});
-}
-
 body, html {
   padding: 0;
   margin: 0;
-  @include calc(height, 100%);
-
+  height: -webkit-calc(100%);
+  height: calc(100%);
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
-
-  &, * {
-    box-sizing: border-box;
-  }
+}
+body, body *, html, html * {
+  box-sizing: border-box;
 }
 
 a {
@@ -32,11 +20,11 @@ a {
   width: 25%;
   padding: 0;
   margin: 0;
-  @include calc(height, 100%);
-
-  & + .column {
-    border-left: solid 1em #ff00ff;
-  }
+  height: -webkit-calc(100%);
+  height: calc(100%);
+}
+.column + .column {
+  border-left: solid 1em #ff00ff;
 }
 
 .column-header {
@@ -69,31 +57,32 @@ a {
 }
 
 .sticky {
-  &:nth-child(2n) {
-    transform: rotate(3deg) translate3d(0, 0, 0);
-  }
-  &:nth-child(2n + 1) {
-    transform: rotate(5deg) translate3d(0, 0, 0);
-  }
-  &:nth-child(2n + 2) {
-    transform: rotate(-2deg) translate3d(0, 0, 0);
-  }
   box-shadow: #000 1px 6px 12px -3px;
   display: block;
   height: 13em;
-  @include calc(width, 80%);
+  width: -webkit-calc(80%);
+  width: calc(80%);
   margin: 0 auto;
   padding: 0.5em;
-  background: $sticky-background;
-  & + .sticky {
-    margin-top: 2em;
-  }
+  background: #ffffcc;
+}
+.sticky:nth-child(2n) {
+  transform: rotate(3deg) translate3d(0, 0, 0);
+}
+.sticky:nth-child(2n + 1) {
+  transform: rotate(5deg) translate3d(0, 0, 0);
+}
+.sticky:nth-child(2n + 2) {
+  transform: rotate(-2deg) translate3d(0, 0, 0);
+}
+.sticky + .sticky {
+  margin-top: 2em;
 }
 
 .sticky .Story, .Story {
-  background: $sticky-background-story;
+  background: #ffffbb;
 }
 
 .sticky .Bug, .Bug {
-  background: $sticky-background-bug;
+  background: #ffaaaa;
 }

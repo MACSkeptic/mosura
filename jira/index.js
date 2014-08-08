@@ -5,6 +5,7 @@ var _ = require('lodash');
 var username = process.env.JIRA_USERNAME;
 var password = process.env.JIRA_PASSWORD;
 var baseUrl = process.env.JIRA_BASEURL;
+var component = process.env.JIRA_COMPONENT;
 
 function issueUrl(issueId) {
   return baseUrl + '/issue/' + issueId;
@@ -12,8 +13,6 @@ function issueUrl(issueId) {
 
 function get(url) {
   var deferred = q.defer();
-
-  console.log(url);
 
   request.get(url, function (error, response, body) {
     if (error) {
@@ -37,9 +36,10 @@ function toQueryString(params) {
   }).join('&');
 }
 
-function addComponentStatusQueryString(url, component, status) {
+function addComponentStatusQueryString(url, status) {
   return url + toQueryString({
-    jql: 'component="'+ component +'" and status="'+ status +'" and IssueType in (Story, Bug)'
+    jql: 'component="'+ component +'" and status="'+ status +'" and IssueType in (Story, Bug)',
+    expand: 'renderedFields'
   });
 }
 

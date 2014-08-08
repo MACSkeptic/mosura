@@ -1,11 +1,35 @@
 <!DOCTYPE html>
-<html>
+<html ng-app="mosura">
   <head>
-    <title><%= title %></title>
+    <meta charset="utf-8"></meta>
+    <title>mosura</title>
     <link rel='stylesheet' href='/stylesheets/style.css' />
+    <link href='http://fonts.googleapis.com/css?family=Indie+Flower' rel='stylesheet' type='text/css'>
   </head>
-  <body>
-    <h1><%= title %></h1>
-    <p>Welcome to <%= title %></p>
+  <body ng-controller="mainController">
+    <div class="column">
+      <header class="column-header">in dev</header>
+      <ul class="sticky-list">
+        <li ng-repeat="issue in data.inProgress.issues" class="sticky {{issue.fields.issuetype.name}}">
+          <header class="sticky-id">{{issue.key}}{{issue.issueType}}</header>
+          <section class="sticky-summary">{{issue.fields.summary}}</section>
+        </li>
+      </ul>
+    </div>
+    <div class="column">
+    <header class="column-header">waiting for UAT</header>
+      <ul class="sticky-list">
+        <li ng-repeat="issue in data.waitingForAcceptance.issues" class="sticky {{issue.fields.issuetype.name}}">
+          <header class="sticky-id">{{issue.key}}</header>
+          <section class="sticky-summary">{{issue.fields.summary}}</section>
+        </li>
+      </ul>
+    </div>
+
+    <script src="/javascripts/external/angular.js"></script>
+    <script src="/javascripts/external/angular-route.js"></script>
+    <script src="/javascripts/external/angular-resource.js"></script>
+
+    <script src="/javascripts/mosura/app.js"></script>
   </body>
 </html>
