@@ -53,8 +53,6 @@ function searchUrl() {
   return baseUrl + '/search';
 }
 
-exports.issues = _.compose(get, _.curry(addComponentStatusQueryString)(searchUrl()));
-exports.issue = _.compose(get, addExpandRenderedFieldsQueryString, issueUrl);
 
 exports.configure = function (config) {
   config = (config.username && config) || JSON.parse(config);
@@ -62,4 +60,7 @@ exports.configure = function (config) {
   password = config.password;
   baseUrl = config.baseUrl;
   component = config.component;
+
+  exports.issues = _.compose(get, _.curry(addComponentStatusQueryString)(searchUrl()));
+  exports.issue = _.compose(get, addExpandRenderedFieldsQueryString, issueUrl);
 };
