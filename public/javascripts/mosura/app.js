@@ -6,6 +6,13 @@ angular.module('mosura').controller('mainController', function ($scope, $resourc
   $scope.columns = [];
 
   function loadColumns() {
+    $scope.allGood = true;
+    console.table([
+      ['username', $scope.jira.username],
+      ['password', 'password for ' + $scope.jira.username + ' ;)'],
+      ['baseUrl', $scope.jira.baseUrl],
+      ['component', $scope.jira.component]
+    ]);
     $resource('/config/columns').query().$promise.then(function (targetColumns) {
       targetColumns.forEach(function (column) {
         $scope.columns[column.order] = column;
@@ -17,13 +24,11 @@ angular.module('mosura').controller('mainController', function ($scope, $resourc
   $scope.jira = $cookieStore.get('jira') || {};
 
   if ($scope.jira.username && $scope.jira.password && $scope.jira.baseUrl && $scope.jira.component) {
-    $scope.allGood = true;
     loadColumns();
   }
 
   $scope.updateCookie = function () {
     $cookieStore.put('jira', $scope.jira);
-    $scope.allGood = true;
     loadColumns();
   };
 });
