@@ -2,65 +2,56 @@ var request = require('request');
 var q = require('q');
 var _ = require('lodash');
 
-var username = process.env.JIRA_USERNAME;
-var password = process.env.JIRA_PASSWORD;
-var baseUrl = process.env.JIRA_BASEURL;
-var component = process.env.JIRA_COMPONENT;
+var DEFAULTS = {
+  username: process.env.JIRA_USERNAME,
+  password: process.env.JIRA_PASSWORD,
+  baseUrl: process.env.JIRA_BASEURL,
+  component: process.env.JIRA_COMPONENT
+};
 
-function issueUrl(issueId) {
-  return baseUrl + '/issue/' + issueId;
+function addIssueUrl(configuration) {
+  configuration.url = configuration.baseUrl + '/issue/' + configuration.issueId;
+  return configuration;
 }
 
-function get(url) {
+function get(configuration) {
   var deferred = q.defer();
 
-  request.get(url, function (error, response, body) {
-    if (error) {
-      deferred.reject(error);
-      return;
-    }
+  console.log(configuration);
 
-    deferred.resolve({
-      response: response,
-      body: JSON.parse(body)
-    });
-
-  }).auth(username, password, true);
+  request.get(configuration.url, function (error, response, body) {
+    if (error) { return deferred.reject(error); }
+    deferred.resolve({ response: response, body: JSON.parse(body) });
+  }).auth(configuration.username, configuration.password, true);
 
   return deferred.promise;
 }
 
 function toQueryString(params) {
-  return '?' + _.map(params, function (value, key) {
-    return key + '=' + encodeURIComponent(value);
-  }).join('&');
+  return '?' + _.map(params, function (value, key) { return key + '=' + encodeURIComponent(value); }).join('&');
 }
 
-function addComponentStatusQueryString(url, status) {
-  return url + toQueryString({
-    jql: 'component="'+ component +'" and status="'+ status +'" and IssueType in (Story, Bug)',
+function addComponentStatusQueryString(configuration) {
+  configuration.url = configuration.url + toQueryString({
+    jql: 'component="'+ configuration.component +'" and status="'+ configuration.status +'" and IssueType in (Story, Bug)',
     expand: 'renderedFields'
   });
+  return configuration;
 }
 
-function addExpandRenderedFieldsQueryString(url) {
-  return url + toQueryString({
-    expand: 'renderedFields'
-  });
+function addExpandRenderedFieldsQueryString(configuration) {
+  configuration.url = configuration.url + toQueryString({ expand: 'renderedFields' });
+  return configuration;
 }
 
-function searchUrl() {
-  return baseUrl + '/search';
+function addSearchUrl(configuration) {
+  configuration.url = configuration.baseUrl + '/search';
+  return configuration;
 }
 
+function useDefaults(configuration) {
+  return _.merge({}, DEFAULTS, configuration);
+}
 
-exports.configure = function (config) {
-  config = (config.username && config) || JSON.parse(config);
-  username = config.username;
-  password = config.password;
-  baseUrl = config.baseUrl;
-  component = config.component;
-
-  exports.issues = _.compose(get, _.curry(addComponentStatusQueryString)(searchUrl()));
-  exports.issue = _.compose(get, addExpandRenderedFieldsQueryString, issueUrl);
-};
+exports.issues = _.compose(get, addComponentStatusQueryString, addSearchUrl, useDefaults);
+exports.issue = _.compose(get, addExpandRenderedFieldsQueryString, addIssueUrl, useDefaults);
