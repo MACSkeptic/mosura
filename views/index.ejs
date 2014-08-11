@@ -7,13 +7,13 @@
     <link href='http://fonts.googleapis.com/css?family=Indie+Flower' rel='stylesheet' type='text/css'>
   </head>
   <body ng-controller="mainController">
-    <div class="column" ng-repeat="column in columns">
+    <div class="column" ng-repeat="column in columns track by column.name">
       <header class="column-header">{{column.name}}</header>
       <div class="loading" ng-hide="column.data.$resolved || (column.data.issues != null)">
         Loading...
       </div>
       <ul class="sticky-list">
-        <li ng-repeat="issue in column.data.issues" class="sticky {{issue.fields.issuetype.name}}">
+        <li ng-repeat="issue in column.data.issues track by issue.key" class="sticky {{issue.fields.issuetype.name}}">
           <header class="sticky-id">
             <a target="_blank" href="{{issue.ui}}">
               {{issue.key}}
