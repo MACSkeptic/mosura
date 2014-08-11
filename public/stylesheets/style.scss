@@ -64,8 +64,22 @@ a {
 
   display: inline-block;
   background: rgba(0,0,0,0.05);
-  z-index: 1;
+  z-index: 2;
+  position: relative;
+  cursor: pointer;
+  clear: right;
   float: right;
+  margin-top: 0.5em;
+
+  &:hover {
+    background: rgba(255,255,255,0.5);
+    text-decoration: underline;
+  }
+
+  a {
+    text-decoration: inherit;
+    color: inherit;
+  }
 }
 
 .sticky-summary {
@@ -190,5 +204,21 @@ a {
 
   label {
     margin-top: 1em;
+  }
+}
+
+.avatar {
+  float: right;
+  clear: right;
+  border: solid 2px rgba(0, 0, 0, 0.1);
+}
+
+.last-updated {
+  display: none;
+}
+
+.sticky:hover {
+  .last-updated {
+    display: block;
   }
 }

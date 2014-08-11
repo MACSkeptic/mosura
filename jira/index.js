@@ -17,8 +17,6 @@ function addIssueUrl(configuration) {
 function get(configuration) {
   var deferred = q.defer();
 
-  console.log(configuration);
-
   request.get(configuration.url, function (error, response, body) {
     if (error) { return deferred.reject(error); }
     deferred.resolve({ response: response, body: JSON.parse(body) });
@@ -27,15 +25,39 @@ function get(configuration) {
   return deferred.promise;
 }
 
+function post(configuration) {
+  var deferred = q.defer();
+  console.log(configuration);
+  request(
+    {
+      method: 'POST',
+      url: configuration.url,
+      json: configuration.body,
+      auth: _.merge({}, configuration, { sendImmediately: true })
+    },
+    function (error, response, body) {
+      if (error) { return deferred.reject(error); }
+      deferred.resolve({ response: response, body: body });
+    }
+  );
+
+  return deferred.promise;
+}
+
 function toQueryString(params) {
   return '?' + _.map(params, function (value, key) { return key + '=' + encodeURIComponent(value); }).join('&');
 }
 
-function addComponentStatusQueryString(configuration) {
-  configuration.url = configuration.url + toQueryString({
-    jql: 'component="'+ configuration.component +'" and status="'+ configuration.status +'" and IssueType in (Story, Bug)',
-    expand: 'renderedFields'
-  });
+function jqlFor(configuration) {
+  return 'component="'+ configuration.component +'" and status="'+ configuration.status +'" and IssueType in (Story, Bug)';
+}
+
+function addComponentStatusBody(configuration) {
+  configuration.body = {
+    jql: jqlFor(configuration),
+    expand: [],
+    fields: ['key', 'summary', 'issuetype', 'assignee', 'fixVersions', 'issueLinks', 'status', 'updated']
+  };
   return configuration;
 }
 
@@ -53,5 +75,5 @@ function useDefaults(configuration) {
   return _.merge({}, DEFAULTS, configuration);
 }
 
-exports.issues = _.compose(get, addComponentStatusQueryString, addSearchUrl, useDefaults);
+exports.issues = _.compose(post, addComponentStatusBody, addSearchUrl, useDefaults);
 exports.issue = _.compose(get, addExpandRenderedFieldsQueryString, addIssueUrl, useDefaults);
