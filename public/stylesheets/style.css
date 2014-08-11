@@ -194,8 +194,29 @@ a {
 
 .last-updated {
   display: none;
+  position: absolute;
+  text-align: right;
+  bottom: 0.2em;
+  right: 0;
+  width: auto;
+  border-bottom-left-radius: 2em;
+  border-bottom-right-radius: 0;
+  border-top-left-radius: 2em;
+  border-top-right-radius: 0em;
+  opacity: 0.9;
+  font-weight: bolder;
 }
 
 .sticky:hover .last-updated {
   display: block;
+  padding: 0.3em 0.3em 0.3em 1em;
+  color: white;
+  z-index: 3;
+  font-size: 1.3em;
+}
+.sticky:hover .last-updated.good {
+  background: #11bb11;
+}
+.sticky:hover .last-updated.evil {
+  background: #ff1111;
 }

@@ -21,7 +21,7 @@
           </header>
           <img src="{{issue.fields.assignee.avatarUrls['48x48']}}" width="48" height="48" class="avatar"></img>
           <section class="sticky-summary">{{issue.fields.summary}}</section>
-          <section class="last-updated">last update in jira: {{issue.staleFor}} days ago</section>
+          <section class="last-updated" ng-class="{ evil: issue.staleFor >= 2, good: issue.staleFor < 2 }">last update: {{issue.staleFor}} days ago</section>
         </li>
       </ul>
     </div>
