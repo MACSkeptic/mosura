@@ -9,7 +9,7 @@ $sticky-background-bug: #ffaaaa;
   #{$property}: calc(#{$expression});
 }
 
-body, html {
+body, html, .main-view {
   padding: 0;
   margin: 0;
   overflow-y: auto;

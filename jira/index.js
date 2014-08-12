@@ -25,12 +25,13 @@ function get(configuration) {
   return deferred.promise;
 }
 
-function post(configuration) {
+function requestWithBody(verb, configuration) {
   var deferred = q.defer();
-  console.log(configuration);
+  console.log(verb, configuration);
+  
   request(
     {
-      method: 'POST',
+      method: verb,
       url: configuration.url,
       json: configuration.body,
       auth: _.merge({}, configuration, { sendImmediately: true })
@@ -42,6 +43,14 @@ function post(configuration) {
   );
 
   return deferred.promise;
+}
+
+function post(configuration) {
+  return requestWithBody('POST', configuration);
+}
+
+function put(configuration) {
+  return requestWithBody('PUT', configuration);
 }
 
 function toQueryString(params) {
@@ -75,5 +84,13 @@ function useDefaults(configuration) {
   return _.merge({}, DEFAULTS, configuration);
 }
 
+function addUpdateFieldBody(configuration) {
+  var fields = {};
+  fields[configuration.field] = configuration.value;
+  configuration.body = { fields: fields };
+  return configuration;
+}
+
+exports.updateField = _.compose(put, addUpdateFieldBody, addIssueUrl, useDefaults);
 exports.issues = _.compose(post, addComponentStatusBody, addSearchUrl, useDefaults);
 exports.issue = _.compose(get, addExpandRenderedFieldsQueryString, addIssueUrl, useDefaults);

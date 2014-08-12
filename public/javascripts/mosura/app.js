@@ -1,10 +1,16 @@
 angular.module('mosura', ['ngRoute', 'ngResource', 'ngCookies', 'LocalStorageModule']);
 
-angular.module('mosura').config(function (localStorageServiceProvider) {
+angular.module('mosura').config(function ($routeProvider, $locationProvider, localStorageServiceProvider) {
   localStorageServiceProvider.setPrefix('mosura');
+
+  $routeProvider.when('/development', { controller: 'DevelopmentController', templateUrl: '/templates/development.html' });
+  $routeProvider.when('/discovery', { controller: 'DiscoveryController', templateUrl: '/templates/discovery.html' });
+  $routeProvider.otherwise({ redirectTo: '/development' });
+
+  $locationProvider.html5Mode(false);
 });
 
-angular.module('mosura').controller('mainController', function ($scope, $interval, $resource, $cookieStore, localStorageService) {
+angular.module('mosura').controller('DevelopmentController', function ($scope, $interval, $resource, $cookieStore, localStorageService) {
   var issuesResource = $resource('/jira/issues/:status');
   var poller = null;
 
