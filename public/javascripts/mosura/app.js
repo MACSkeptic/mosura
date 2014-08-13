@@ -3,6 +3,7 @@ angular.module('mosura', ['ngRoute', 'ngResource', 'ngCookies', 'LocalStorageMod
 angular.module('mosura').config(function ($routeProvider, $locationProvider, localStorageServiceProvider) {
   localStorageServiceProvider.setPrefix('mosura');
 
+  $routeProvider.when('/login', { controller: 'LoginController', templateUrl: '/templates/login.html' });
   $routeProvider.when('/development', { controller: 'DevelopmentController', templateUrl: '/templates/development.html' });
   $routeProvider.when('/discovery', { controller: 'DiscoveryController', templateUrl: '/templates/discovery.html' });
   $routeProvider.otherwise({ redirectTo: '/development' });
@@ -10,7 +11,50 @@ angular.module('mosura').config(function ($routeProvider, $locationProvider, loc
   $locationProvider.html5Mode(false);
 });
 
-angular.module('mosura').controller('DevelopmentController', function ($scope, $interval, $resource, $cookieStore, localStorageService) {
+angular.module('mosura').factory('JiraCredentials', function ($cookieStore) {
+  return {
+    fromCookie: function () {
+      var credentials = $cookieStore.get('jira');
+      return credentials && credentials.username && credentials.password && credentials;
+    },
+    toCookie: function (credentials) {
+      return $cookieStore.put('jira', credentials);
+    }
+  };
+});
+
+angular.module('mosura').factory('EnsureLogin', function ($location, $cookieStore, JiraCredentials) {
+  return {
+    then: function (comebackTo) {
+      if (JiraCredentials.fromCookie()) { return; }
+      $cookieStore.put('last-page', comebackTo || '/development');
+      $location.path('/login');
+    };
+  };
+});
+
+angular.module('mosura').controller('LoginController', function ($scope, $interval, $location, $resource, localStorageService, JiraCredentials) {
+  function navigateBackToWhereYouCameFrom() {
+    $location.path($cookieStore.get('last-page') || '/development');
+  }
+
+  function storeJiraCredentialsOnCookie() {
+    JiraCredentials.toCookie($scope.jiraCredentials);
+  }
+
+  $scope.login = function () {
+    storeJiraCredentialsOnCookie();
+    navigateBackToWhereYouCameFrom();
+  };
+});
+
+angular.module('mosura').controller('DiscoveryController', function ($scope, $interval, $location, $resource, localStorageService, EnsureLogin) {
+  EnsureLogin.then('/discovery');
+});
+
+angular.module('mosura').controller('DevelopmentController', function ($scope, $interval, $resource, localStorageService, EnsureLogin) {
+  EnsureLogin.then('/development');
+
   var issuesResource = $resource('/jira/issues/:status');
   var poller = null;
 
@@ -35,6 +79,8 @@ angular.module('mosura').controller('DevelopmentController', function ($scope, $
   }
 
   function calculateStaleFor(data) {
+    if (!data || !data.issues) { return null; }
+
     data.issues.forEach(function (issue) {
       issue.staleFor = daysSince(issue.fields.updated);
     });
@@ -42,6 +88,8 @@ angular.module('mosura').controller('DevelopmentController', function ($scope, $
   }
 
   function adjustUrls(data) {
+    if (!data || !data.issues) { return null; }
+
     data.issues.forEach(function (issue) {
       issue.ui = issue.self.replace(/rest\/api\/2.*/, 'browse/' + issue.key);
     });
@@ -49,11 +97,6 @@ angular.module('mosura').controller('DevelopmentController', function ($scope, $
   }
 
   function loadColumnsFromServer() {
-    if (!hasJiraInformation()) {
-      $scope.allGood = false;
-      return;
-    }
-
     $resource('/config/columns').query().$promise.then(function (targetColumns) {
       console.log('target columns:', targetColumns);
       targetColumns.forEach(function (column) {
@@ -74,7 +117,6 @@ angular.module('mosura').controller('DevelopmentController', function ($scope, $
   function loadColumns() {
     if (poller) { $interval.cancel(poller); poller = null; }
 
-    $scope.allGood = true;
     loadColumnsFromCache();
 
     loadColumnsFromServer();
@@ -85,10 +127,6 @@ angular.module('mosura').controller('DevelopmentController', function ($scope, $
 
   function loadJiraCookie() {
     $scope.jira = $cookieStore.get('jira') || {};
-  }
-
-  function hasJiraInformation() {
-    return $scope.jira.username && $scope.jira.password && $scope.jira.baseUrl && $scope.jira.component;
   }
 
   $scope.updateCookie = function () {
