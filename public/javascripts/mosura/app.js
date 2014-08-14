@@ -29,11 +29,11 @@ angular.module('mosura').factory('EnsureLogin', function ($location, $cookieStor
       if (JiraCredentials.fromCookie()) { return; }
       $cookieStore.put('last-page', comebackTo || '/development');
       $location.path('/login');
-    };
+    }
   };
 });
 
-angular.module('mosura').controller('LoginController', function ($scope, $interval, $location, $resource, localStorageService, JiraCredentials) {
+angular.module('mosura').controller('LoginController', function ($scope, $interval, $location, $resource, $cookieStore, localStorageService, JiraCredentials) {
   function navigateBackToWhereYouCameFrom() {
     $location.path($cookieStore.get('last-page') || '/development');
   }
@@ -48,11 +48,46 @@ angular.module('mosura').controller('LoginController', function ($scope, $interv
   };
 });
 
+angular.module('mosura').factory('DataHandler', function ($scope, $interval, $resource, localStorageService) {
+  var api;
+
+  api.loadColumnsFromCache = function (scope) {
+    var cachedColumns = localStorageService.get('columns');
+    scope = scope || {};
+
+    if (cachedColumns && cachedColumns.length) {
+      scope.columns = cachedColumns;
+    }
+
+    return scope.columns;
+  };
+
+  api.daysSince = function (zuluTimeString) {
+    var now = new Date().getTime();
+    var then = new Date(zuluTimeString).getTime();
+
+    return Math.round(((((now - then) / 1000) / 60) / 60) / 24);
+  };
+
+  api.calculateStaleFor = function (data) {
+    if (!data || !data.issues) { return null; }
+
+    data.issues.forEach(function (issue) {
+      issue.staleFor = daysSince(issue.fields.updated);
+    });
+
+    return data;
+  };
+
+  return api;
+});
+
 angular.module('mosura').controller('DiscoveryController', function ($scope, $interval, $location, $resource, localStorageService, EnsureLogin) {
   EnsureLogin.then('/discovery');
 });
 
-angular.module('mosura').controller('DevelopmentController', function ($scope, $interval, $resource, localStorageService, EnsureLogin) {
+angular.module('mosura').controller('DevelopmentController', function (
+  $scope, $interval, $resource, localStorageService, EnsureLogin, DataHandler) {
   EnsureLogin.then('/development');
 
   var issuesResource = $resource('/jira/issues/:status');
@@ -61,38 +96,17 @@ angular.module('mosura').controller('DevelopmentController', function ($scope, $
   $scope.data = {};
   $scope.columns = [];
 
-  function loadColumnsFromCache() {
-    var cachedColumns = localStorageService.get('columns');
+  function loadColumnsFromCache() { return DataHandler.loadColumnsFromCache($scope); }
+  function daysSince(zuluTimeString) { return DataHandler.daysSince(zuluTimeString); }
+  function calculateStaleFor(data) { return DataHandler.calculateStaleFor(data); }
 
-    if (cachedColumns && cachedColumns.length) {
-      $scope.columns = cachedColumns;
-    }
-
-    return $scope.columns;
-  }
-
-  function daysSince(zuluTime) {
-    var now = new Date().getTime();
-    var then = new Date(zuluTime).getTime();
-
-    return Math.round(((((now - then) / 1000) / 60) / 60) / 24);
-  }
-
-  function calculateStaleFor(data) {
-    if (!data || !data.issues) { return null; }
-
-    data.issues.forEach(function (issue) {
-      issue.staleFor = daysSince(issue.fields.updated);
-    });
-    return data;
-  }
-
-  function adjustUrls(data) {
+  function addUiUrl(data) {
     if (!data || !data.issues) { return null; }
 
     data.issues.forEach(function (issue) {
       issue.ui = issue.self.replace(/rest\/api\/2.*/, 'browse/' + issue.key);
     });
+
     return data;
   }
 
@@ -105,7 +119,7 @@ angular.module('mosura').controller('DevelopmentController', function ($scope, $
           $scope.columns[column.order] = column;
           column.data = data;
           return column.data;
-        }).then(adjustUrls).then(saveColumnsToCache);
+        }).then(addUiUrl).then(saveColumnsToCache);
       });
     });
   }
@@ -125,15 +139,5 @@ angular.module('mosura').controller('DevelopmentController', function ($scope, $
     poller = $interval(loadColumnsFromServer, 5 * 60 * 1000);
   }
 
-  function loadJiraCookie() {
-    $scope.jira = $cookieStore.get('jira') || {};
-  }
-
-  $scope.updateCookie = function () {
-    $cookieStore.put('jira', $scope.jira);
-    loadColumns();
-  };
-
-  loadJiraCookie();
   loadColumns();
 });
