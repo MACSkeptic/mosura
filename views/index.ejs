@@ -6,35 +6,10 @@
     <link rel='stylesheet' href='/stylesheets/style.css' />
     <link href='http://fonts.googleapis.com/css?family=Indie+Flower' rel='stylesheet' type='text/css'>
   </head>
-  <body ng-controller="mainController">
-    <div class="column" ng-repeat="column in columns track by column.name">
-      <header class="column-header">{{column.name}}</header>
-      <div class="loading" ng-hide="column.data.$resolved || (column.data.issues != null)">
-        Loading...
-      </div>
-      <ul class="sticky-list">
-        <li ng-repeat="issue in column.data.issues track by issue.key" class="sticky {{issue.fields.issuetype.name}}">
-          <header class="sticky-id">
-            <a target="_blank" href="{{issue.ui}}">
-              {{issue.key}}
-            </a>
-          </header>
-          <img src="{{issue.fields.assignee.avatarUrls['48x48']}}" width="48" height="48" class="avatar"></img>
-          <section class="sticky-summary">{{issue.fields.summary}}</section>
-          <section class="last-updated" ng-class="{ evil: issue.staleFor >= 2, good: issue.staleFor < 2 }">last update: {{issue.staleFor}} days ago</section>
-        </li>
-      </ul>
+  <body>
+    <div ng-view class="main-view">
+      Loading main view ;)
     </div>
-
-    <form class="setup-information" ng-hide="allGood" ng-submit="updateCookie()">
-      <fieldset>
-        <label for="username">JIRA username</label><input id="username" ng-model="jira.username"/>
-        <label for="password">JIRA password</label><input type="password" id="password" ng-model="jira.password"/>
-        <label for="baseurl">JIRA API</label><input placeholder="e.g.: http://<yourcompany>.atlassian.net/rest/api/2" id="baseurl" ng-model="jira.baseUrl"/>
-        <label for="component">JIRA component</label><input id="component" ng-model="jira.component"/>
-      </fieldset>
-      <input type="submit" value="go!"/>
-    </form>
 
     <script src="/javascripts/external/angular.js"></script>
     <script src="/javascripts/external/angular-route.js"></script>

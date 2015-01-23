@@ -1,53 +1,116 @@
 angular.module('mosura', ['ngRoute', 'ngResource', 'ngCookies', 'LocalStorageModule']);
 
-angular.module('mosura').config(function (localStorageServiceProvider) {
+angular.module('mosura').config(function ($routeProvider, $locationProvider, localStorageServiceProvider) {
   localStorageServiceProvider.setPrefix('mosura');
+
+  $routeProvider.when('/login', { controller: 'LoginController', templateUrl: '/templates/login.html' });
+  $routeProvider.when('/development', { controller: 'DevelopmentController', templateUrl: '/templates/development.html' });
+  $routeProvider.when('/discovery', { controller: 'DiscoveryController', templateUrl: '/templates/discovery.html' });
+  $routeProvider.otherwise({ redirectTo: '/development' });
+
+  $locationProvider.html5Mode(false);
 });
 
-angular.module('mosura').controller('mainController', function ($scope, $interval, $resource, $cookieStore, localStorageService) {
+angular.module('mosura').factory('JiraCredentials', function ($cookieStore) {
+  return {
+    fromCookie: function () {
+      var credentials = $cookieStore.get('jira');
+      return credentials && credentials.username && credentials.password && credentials;
+    },
+    toCookie: function (credentials) {
+      return $cookieStore.put('jira', credentials);
+    }
+  };
+});
+
+angular.module('mosura').factory('EnsureLogin', function ($location, $cookieStore, JiraCredentials) {
+  return {
+    then: function (comebackTo) {
+      if (JiraCredentials.fromCookie()) { return; }
+      $cookieStore.put('last-page', comebackTo || '/development');
+      $location.path('/login');
+    }
+  };
+});
+
+angular.module('mosura').controller('LoginController', function ($scope, $interval, $location, $resource, $cookieStore, localStorageService, JiraCredentials) {
+  function navigateBackToWhereYouCameFrom() {
+    $location.path($cookieStore.get('last-page') || '/development');
+  }
+
+  function storeJiraCredentialsOnCookie() {
+    JiraCredentials.toCookie($scope.jiraCredentials);
+  }
+
+  $scope.login = function () {
+    storeJiraCredentialsOnCookie();
+    navigateBackToWhereYouCameFrom();
+  };
+});
+
+angular.module('mosura').factory('DataHandler', function ($scope, $interval, $resource, localStorageService) {
+  var api;
+
+  api.loadColumnsFromCache = function (scope) {
+    var cachedColumns = localStorageService.get('columns');
+    scope = scope || {};
+
+    if (cachedColumns && cachedColumns.length) {
+      scope.columns = cachedColumns;
+    }
+
+    return scope.columns;
+  };
+
+  api.daysSince = function (zuluTimeString) {
+    var now = new Date().getTime();
+    var then = new Date(zuluTimeString).getTime();
+
+    return Math.round(((((now - then) / 1000) / 60) / 60) / 24);
+  };
+
+  api.calculateStaleFor = function (data) {
+    if (!data || !data.issues) { return null; }
+
+    data.issues.forEach(function (issue) {
+      issue.staleFor = daysSince(issue.fields.updated);
+    });
+
+    return data;
+  };
+
+  return api;
+});
+
+angular.module('mosura').controller('DiscoveryController', function ($scope, $interval, $location, $resource, localStorageService, EnsureLogin) {
+  EnsureLogin.then('/discovery');
+});
+
+angular.module('mosura').controller('DevelopmentController', function (
+  $scope, $interval, $resource, localStorageService, EnsureLogin, DataHandler) {
+  EnsureLogin.then('/development');
+
   var issuesResource = $resource('/jira/issues/:status');
   var poller = null;
 
   $scope.data = {};
   $scope.columns = [];
 
-  function loadColumnsFromCache() {
-    var cachedColumns = localStorageService.get('columns');
+  function loadColumnsFromCache() { return DataHandler.loadColumnsFromCache($scope); }
+  function daysSince(zuluTimeString) { return DataHandler.daysSince(zuluTimeString); }
+  function calculateStaleFor(data) { return DataHandler.calculateStaleFor(data); }
 
-    if (cachedColumns && cachedColumns.length) {
-      $scope.columns = cachedColumns;
-    }
+  function addUiUrl(data) {
+    if (!data || !data.issues) { return null; }
 
-    return $scope.columns;
-  }
-
-  function daysSince(zuluTime) {
-    var now = new Date().getTime();
-    var then = new Date(zuluTime).getTime();
-
-    return Math.round(((((now - then) / 1000) / 60) / 60) / 24);
-  }
-
-  function calculateStaleFor(data) {
-    data.issues.forEach(function (issue) {
-      issue.staleFor = daysSince(issue.fields.updated);
-    });
-    return data;
-  }
-
-  function adjustUrls(data) {
     data.issues.forEach(function (issue) {
       issue.ui = issue.self.replace(/rest\/api\/2.*/, 'browse/' + issue.key);
     });
+
     return data;
   }
 
   function loadColumnsFromServer() {
-    if (!hasJiraInformation()) {
-      $scope.allGood = false;
-      return;
-    }
-
     $resource('/config/columns').query().$promise.then(function (targetColumns) {
       console.log('target columns:', targetColumns);
       targetColumns.forEach(function (column) {
@@ -56,7 +119,7 @@ angular.module('mosura').controller('mainController', function ($scope, $interva
           $scope.columns[column.order] = column;
           column.data = data;
           return column.data;
-        }).then(adjustUrls).then(saveColumnsToCache);
+        }).then(addUiUrl).then(saveColumnsToCache);
       });
     });
   }
@@ -68,7 +131,6 @@ angular.module('mosura').controller('mainController', function ($scope, $interva
   function loadColumns() {
     if (poller) { $interval.cancel(poller); poller = null; }
 
-    $scope.allGood = true;
     loadColumnsFromCache();
 
     loadColumnsFromServer();
@@ -77,19 +139,5 @@ angular.module('mosura').controller('mainController', function ($scope, $interva
     poller = $interval(loadColumnsFromServer, 5 * 60 * 1000);
   }
 
-  function loadJiraCookie() {
-    $scope.jira = $cookieStore.get('jira') || {};
-  }
-
-  function hasJiraInformation() {
-    return $scope.jira.username && $scope.jira.password && $scope.jira.baseUrl && $scope.jira.component;
-  }
-
-  $scope.updateCookie = function () {
-    $cookieStore.put('jira', $scope.jira);
-    loadColumns();
-  };
-
-  loadJiraCookie();
   loadColumns();
 });
